@@ -1,4 +1,4 @@
-title = "gitleaks config"
+title = "gitleaks configs"
 
 [[rules]]
 	description = "AWS Manager ID"
