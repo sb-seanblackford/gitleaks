@@ -176,7 +176,7 @@ title = "gitleaks configs"
 	]
 
 [Global]
-    file = '''(?i)(id_rsa|passwd|pgpass|pem|shadow)'''
+    file = '''(?i)(id_rsa|passwd|pgpass|shadow)'''
 
 [whitelist]
 	description = "Custom whitelist to exclude images and gitleaks config and any other files"
