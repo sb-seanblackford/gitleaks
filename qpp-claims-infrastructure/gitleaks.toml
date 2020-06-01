@@ -1,4 +1,4 @@
-title = "gitleaks configs"
+title = "gitleaks config"
 
 [[rules]]
 	description = "AWS Manager ID"
@@ -124,60 +124,80 @@ title = "gitleaks configs"
 
 [[rules]]
 	description = "Env Var"
-	regex = '''(?i)(api_key|apikey|secret|password|pw)=[0-9a-zA-Z-_{}]{4,120}'''
+	regex = '''(?i)(apikey|secret|key|api|password|pass|pw|host)=[0-9a-zA-Z-_.{}]{4,120}'''
+
+#[[rules]]
+#	description = "Port"
+#	regex = '''(?i)port(.{0,4})?[0-9]{1,10}'''
+#	[[rules.whitelist]]
+#		regex = '''(?i)port '''
+#		description = "ignore export "
+
+
+
+[[rules]]
+	description = "Email"
+	regex = '''[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}'''
+	tags = ["email"]
 	[[rules.whitelist]]
-	    regex = '''(PASSWORD=HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw)'''
-	    description = "Ignore public test okta credential, this is meant to be public"
+		file = '''(?i)bashrc'''
+		description = "ignore bashrc emails"
+
 
 [[rules]]
 	description = "Generic Credential"
-	regex = '''(?i)(dbpasswd|dbuser|dbname|dbhost|api_key|apikey|secret|password|guid|pw)(.{0,20})?['|"][0-9a-zA-Z-_!{}/=]{4,120}['|"]'''
+	regex = '''(?i)(dbpasswd|dbuser|dbname|dbhost|api_key|apikey|secret|key|api|password|user|guid|hostname|pw|auth)(.{0,20})?['|"]([0-9a-zA-Z-_\/+!{}/=]{4,120})['|"]'''
 	tags = ["key", "API", "generic"]
+	# ignore leaks with specific identifiers like slack and aws
 	[[rules.whitelist]]
-	    regex = '''(HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw)'''
-	    description = "Ignore public test okta credential, this is meant to be public"
+		regex = '''xox[baprs]-([0-9a-zA-Z]{10,48})'''
+		description = "ignore slack"
 	[[rules.whitelist]]
-	    regex = '''.*(dbpasswd|dbuser|dbname|dbhost|api_key|apikey|secret|password|guid|pw).*:'''
-            description = "Ignore generic credential strings if they are followed by colon. They are declarative entities"
+		description = "MailChimp API key"
+		regex = '''(?i)(.{0,20})?['"][0-9a-f]{32}-us[0-9]{1,2}['"]'''
 	[[rules.whitelist]]
-	    regex = '''\$.*(dbpasswd|dbuser|dbname|dbhost|api_key|apikey|secret|password|guid|pw)'''
-	    description = "Ignore generic credential string tarting with dollar sign.  They are variables"
-	[[rules.whitelist]]
-	    regex = '''\{.*\}'''
-	    description = "Ignore anything in brackets. Its a variable."
-		
+		description = "AWS Manager ID"
+		regex = '''(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'''
+    [[rules.whitelist]]
+        regex='''(dns_secret_key|dns_access_key)'''
+        description = "Ignore credstash secrets in Terraform files"        
+
+
+
+[[rules]]
+	description = "High Entropy"
+	regex = '''[0-9a-zA-Z-_!{}/=]{4,120}'''
+  	fileNameRegex = '''(?i)(dump.sql|high-entropy-misc.txt)$'''
+	tags = ["entropy"]
+        [[rules.Entropies]]
+            Min = "4.3"
+            Max = "7.0"
+        [[rules.whitelist]]
+            description = "ignore ssh key and pems"
+            file = '''(pem|ppk|env)$'''
+            path = '''(.*)?ssh'''
+
+
+
+[[rules]]
+	description = "Potential bash var"
+	regex='''(?i)(=)([0-9a-zA-Z-_!{}=]{4,120})'''
+	tags = ["key", "bash", "API", "generic"]
+        [[rules.Entropies]]
+            Min = "3.5"
+            Max = "4.5"
+            Group = "1"
+
 [[rules]]
 	description = "WP-Config"
 	regex='''define(.{0,20})?(DB_CHARSET|NONCE_SALT|LOGGED_IN_SALT|AUTH_SALT|NONCE_KEY|DB_HOST|DB_PASSWORD|AUTH_KEY|SECURE_AUTH_KEY|LOGGED_IN_KEY|DB_NAME|DB_USER)(.{0,20})?['|"].{10,120}['|"]'''
 	tags = ["key", "API", "generic"]
 
-
 [[rules]]
-	description = "Pure Entropy"
-	regex = '''['|"][0-9a-zA-Z-._{}$\/=]{40,120}['|"]'''
-	entropies = [
-        "5.0-5.6"
-	]
-	[[rules.whitelist]]
-            regex = '''("bfd_keystore_location=\$BFD_KEYSTORE_LOCATION")'''
-            description = "Ignore BFD keystore location entropy trigger"
-	[[rules.whitelist]]
-	    regex = '''(ABCDEFGHIJKLMNOPQRSTUVWXYabcdefghijklmnopqrstuvwxyz)'''
-	    description = "Ignore alphabet entropy trigger for health checks"
-	[[rules.whitelist]]
-	    regex = '''(integrity="sha(256|384|512)-.*")'''
-	    description = "Ignore valid sha integrity hash"
-
-[[rules]]
-	description = "Entropy plus Generic Credential"
-	regex = '''(?i)(api_key|apikey|secret|key|api|password|pw)'''
-	entropies = [
-        "5.2-5.5"
-	]
-
-[Global]
-    file = '''(?i)(id_rsa|passwd|pgpass|pem|shadow)'''
+	description = "Files with keys and credentials"
+    fileNameRegex = '''(?i)(id_rsa|passwd|id_rsa.pub|pgpass|pem|key|shadow)'''
 
 [whitelist]
-	description = "Custom whitelist to exclude images and gitleaks config and any other files"
-	file = '''(.*?)(jpg|gif|doc|pdf|bin)|(gitleaks.toml)|(create-database-secret.py)|(git-secrets.sh)|(get-database-secret.py)|(TestUtil.java)|(application.bfd.properties)|(SwaggerConfig.java)|(TestRunner.java)|(prod-config.yml)|(imp-config.yml)|(sbx-config.yml)|(package-lock.json)|(example.env)|(dev-config.yml)|(local-config.yml)|(artilleryUtils.js)|(.travis.yml)$'''
+	description = "image whitelists"
+	files = ['''(.*?)(jpg|gif|doc|pdf|bin)$''']
+
