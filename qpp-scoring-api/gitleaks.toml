@@ -128,6 +128,9 @@ title = "gitleaks configs"
 	[[rules.whitelist]]
 	    regex = '''(PASSWORD=HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw)'''
 	    description = "Ignore public test okta credential, this is meant to be public"
+	[[rules.whitelist]]
+	    file='''test.env'''
+	    
 
 [[rules]]
 	description = "Generic Credential"
